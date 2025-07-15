@@ -36,7 +36,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           channel: event.channel,
-          text: '의견 감사해요 🙏 피플팀에 익명 전달했어요.'
+          text: '소중한 의견 감사합니다 🙏 피플팀에 전달했어요.'
         })
       });
 
