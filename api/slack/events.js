@@ -1,38 +1,51 @@
-// 슬랙 이벤트 처리용 핸들러 (Vercel 서버리스 대응)
-// 설치 패키지: npm install @slack/bolt dotenv
-
-const { App, ExpressReceiver } = require('@slack/bolt');
-require('dotenv').config();
-
-const receiver = new ExpressReceiver({
-  signingSecret: process.env.SLACK_SIGNING_SECRET
-});
-
-const app = new App({
-  token: process.env.SLACK_BOT_TOKEN,
-  receiver
-});
-
-const ADMIN_CHANNEL_ID = process.env.ADMIN_CHANNEL_ID;
-
-// DM 메시지 처리
-app.message(async ({ message, client, logger }) => {
-  try {
-    if (message.channel_type === 'im' && !message.bot_id) {
-      await client.chat.postMessage({
-        channel: ADMIN_CHANNEL_ID,
-        text: `📩 [불편사항이 접수되었어요] ${message.text}`
-      });
-
-      await client.chat.postMessage({
-        channel: message.channel,
-        text: '의견 감사해요 🙏 익명으로 피플팀에 전달했어요.'
-      });
-    }
-  } catch (error) {
-    logger.error(error);
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).send('Method Not Allowed');
   }
-});
 
-// Vercel에 맞는 API 핸들러로 내보내기
-module.exports = receiver.router;
+  const { type, challenge, event } = req.body;
+
+  // 👋 Slack URL 검증용 challenge 처리
+  if (type === 'url_verification') {
+    return res.status(200).send(challenge);
+  }
+
+  // 📩 DM 이벤트 처리
+  if (event?.type === 'message' && event.channel_type === 'im' && !event.bot_id) {
+    const adminChannel = process.env.ADMIN_CHANNEL_ID;
+    const token = process.env.SLACK_BOT_TOKEN;
+
+    try {
+      await fetch('https://slack.com/api/chat.postMessage', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          channel: adminChannel,
+          text: `📩 [익명 메시지 도착] ${event.text}`
+        })
+      });
+
+      await fetch('https://slack.com/api/chat.postMessage', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          channel: event.channel,
+          text: '의견 감사해요 🙏 익명으로 피플팀에 전달했어요.'
+        })
+      });
+
+      return res.status(200).send('OK');
+    } catch (error) {
+      console.error('Slack DM 처리 오류:', error);
+      return res.status(500).send('Error forwarding message');
+    }
+  }
+
+  return res.status(200).send('No action taken');
+}
