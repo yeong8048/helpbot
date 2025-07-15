@@ -1,8 +1,0 @@
-{
-  "routes": [
-    {
-      "src": "/slack/events",
-      "dest": "/api/slack/events.js"
-    }
-  ]
-}
