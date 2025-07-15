@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "api/slack/events.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "routes": [
     {
       "src": "/slack/events",
