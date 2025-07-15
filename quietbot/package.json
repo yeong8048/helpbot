@@ -1,1 +1,12 @@
+{
+  "name": "quietbot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node api/slack/events.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.1.4"
+  }
+}
 
