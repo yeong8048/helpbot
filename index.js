@@ -1,6 +1,10 @@
 // 설치해야 하는 패키지:
 // npm install @slack/bolt dotenv
 
+app.event('url_verification', async ({ body, ack }) => {
+  await ack(body.challenge);
+});
+
 require('dotenv').config();
 const { App } = require('@slack/bolt');
 
